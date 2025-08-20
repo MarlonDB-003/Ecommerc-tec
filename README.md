@@ -1,73 +1,85 @@
-# Welcome to your Lovable project
+# Ecommerc-tec
 
-## Project info
+## Sobre o Projeto
 
-**URL**: https://lovable.dev/projects/605ff42c-33f8-462b-b214-122bf37fb257
+Este é um projeto de e-commerce desenvolvido com foco em tecnologia, utilizando as melhores práticas e ferramentas modernas do ecossistema front-end.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## Tecnologias Utilizadas
 
-**Use Lovable**
+- [Vite](https://vitejs.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [React](https://react.dev/)
+- [shadcn-ui](https://ui.shadcn.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/605ff42c-33f8-462b-b214-122bf37fb257) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## Como rodar o projeto localmente
 
-**Use your preferred IDE**
+**Pré-requisitos:**  
+Tenha o [Node.js](https://nodejs.org/) e o [npm](https://www.npmjs.com/) instalados. Recomenda-se o uso do [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) para gerenciar versões do Node.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Passos para iniciar
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# 1. Clone o repositório
+git clone <URL_DO_SEU_REPOSITORIO>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# 2. Acesse a pasta do projeto
+cd <NOME_DA_PASTA>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# 3. Instale as dependências
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 4. Inicie o servidor de desenvolvimento
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Como contribuir
 
-**Use GitHub Codespaces**
+- Faça um fork do projeto
+- Crie uma branch para sua feature ou correção (`git checkout -b minha-feature`)
+- Faça commit das suas alterações (`git commit -m 'feat: minha nova feature'`)
+- Faça push para a branch (`git push origin minha-feature`)
+- Abra um Pull Request
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+---
 
-## What technologies are used for this project?
+## Estrutura de Pastas
 
-This project is built with:
+```
+public/
+  favicon.ico
+  placeholder.svg
+  robots.txt
+src/
+  App.css
+  App.tsx
+  index.css
+  main.tsx
+  vite-env.d.ts
+  assets/
+    controle-xbox-series.jpg
+    earbuds.jpg
+    gabinete-gamer.jpg
+    gaming-chair.jpg
+    gaming-headset.jpg
+    ...
+  components/
+  contexts/
+  hooks/
+  integrations/
+  lib/
+  pages/
+  supabase/
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+---
 
-## How can I deploy this project?
+## Licença
 
-Simply open [Lovable](https://lovable.dev/projects/605ff42c-33f8-462b-b214-122bf37fb257) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Este projeto segue os termos definidos no arquivo LICENSE.
