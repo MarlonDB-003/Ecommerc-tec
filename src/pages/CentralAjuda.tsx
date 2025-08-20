@@ -46,7 +46,7 @@ const CentralAjuda = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Ligue para (11) 9999-9999 para atendimento direto.
+                  Ligue para (92) 9999-9999 para atendimento direto.
                 </p>
               </CardContent>
             </Card>
@@ -109,7 +109,7 @@ const CentralAjuda = () => {
               </p>
               <div className="space-y-2">
                 <p><strong>Email:</strong> contato@techworld.com</p>
-                <p><strong>Telefone:</strong> (11) 9999-9999</p>
+                <p><strong>Telefone:</strong> (92) 9999-9999</p>
                 <p><strong>Horário de atendimento:</strong> Segunda a sexta, das 8h às 18h</p>
               </div>
             </CardContent>

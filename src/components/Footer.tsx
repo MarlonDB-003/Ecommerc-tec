@@ -95,11 +95,11 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground">(11) 9999-9999</span>
+                <span className="text-muted-foreground">(92) 99999-9999</span>
               </div>
               <div className="flex items-center space-x-3">
                 <MapPin className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground">São Paulo, SP</span>
+                <span className="text-muted-foreground">Itacoatiara, AM</span>
               </div>
             </div>
           </div>
@@ -107,7 +107,7 @@ const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-8 text-center">
           <p className="text-muted-foreground">
-            © 2024 TechWorld. Todos os direitos reservados.
+            © 2025 TechWorld. Todos os direitos reservados.
           </p>
         </div>
       </div>
