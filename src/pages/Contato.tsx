@@ -25,7 +25,7 @@ const Contato = () => {
                 <CardTitle>Telefone</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg font-semibold">(11) 9999-9999</p>
+                <p className="text-lg font-semibold">(92) 99999-9999</p>
                 <p className="text-muted-foreground">Segunda a sexta, 8h às 18h</p>
               </CardContent>
             </Card>
@@ -36,7 +36,7 @@ const Contato = () => {
                 <CardTitle>WhatsApp</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg font-semibold">(11) 99999-9999</p>
+                <p className="text-lg font-semibold">(92) 99999-9999</p>
                 <p className="text-muted-foreground">Atendimento rápido</p>
               </CardContent>
             </Card>
@@ -73,7 +73,7 @@ const Contato = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="telefone">Telefone</Label>
-                    <Input id="telefone" placeholder="(11) 99999-9999" />
+                    <Input id="telefone" placeholder="(92) 99999-9999" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="assunto">Assunto</Label>
@@ -123,8 +123,8 @@ const Contato = () => {
                       <h4 className="font-semibold">TechWorld</h4>
                       <p className="text-muted-foreground">
                         Rua da Tecnologia, 123<br />
-                        Bairro Tech - São Paulo, SP<br />
-                        CEP: 01234-567
+                        Bairro Tech - Itacoatiara, AM<br />
+                        CEP: 69100-000
                       </p>
                     </div>
                     <div className="h-48 bg-muted rounded-lg flex items-center justify-center">
