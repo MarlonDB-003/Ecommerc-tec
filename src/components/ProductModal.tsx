@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,7 @@ import { Heart, Star, ShoppingCart, Truck, Shield, RotateCcw, User } from "lucid
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import CheckoutModal from "./CheckoutModal";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Product {
   id: string;
@@ -27,8 +28,35 @@ interface ProductModalProps {
 const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [specifications, setSpecifications] = useState<Array<{label: string, value: string}>>([]);
   const { addToCart } = useCart();
   const { toast } = useToast();
+  
+  useEffect(() => {
+    if (product && isOpen) {
+      fetchSpecifications();
+    }
+  }, [product, isOpen]);
+
+  const fetchSpecifications = async () => {
+    if (!product) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('product_specifications')
+        .select('label, value')
+        .eq('product_id', product.id)
+        .order('display_order');
+
+      if (error) throw error;
+      setSpecifications(data || []);
+    } catch (error) {
+      console.error('Error fetching specifications:', error);
+      // Fallback to static specs if fetch fails
+      setSpecifications(getProductSpecs(product.name));
+    }
+  };
+
   if (!product) return null;
 
   const discount = product.originalPrice 
@@ -153,6 +181,23 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
               </p>
             </div>
 
+            {/* Specifications */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Especificações</h3>
+              <div className="grid grid-cols-1 gap-2 text-sm">
+                {specifications.length > 0 ? (
+                  specifications.map((spec, index) => (
+                    <div key={index} className="flex justify-between py-2 border-b border-muted/30">
+                      <span className="font-medium">{spec.label}:</span>
+                      <span className="text-muted-foreground">{spec.value}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nenhuma especificação cadastrada.</p>
+                )}
+              </div>
+            </div>
+
             {/* Customer Reviews */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Avaliações dos Clientes</h3>
@@ -193,19 +238,6 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
                     {showAllReviews ? 'Ver Menos Avaliações' : `Ver Todas as ${reviews.length} Avaliações`}
                   </Button>
                 )}
-              </div>
-            </div>
-
-            {/* Specifications */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Especificações</h3>
-              <div className="grid grid-cols-1 gap-2 text-sm">
-                {getProductSpecs(product.name).map((spec, index) => (
-                  <div key={index} className="flex justify-between py-2 border-b border-muted/30">
-                    <span className="font-medium">{spec.label}:</span>
-                    <span className="text-muted-foreground">{spec.value}</span>
-                  </div>
-                ))}
               </div>
             </div>
 
