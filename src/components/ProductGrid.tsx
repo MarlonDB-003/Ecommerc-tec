@@ -60,19 +60,27 @@ const ProductGrid = () => {
   };
 
   // Converter produto do banco para formato do componente
-  const transformProduct = (product: Product) => ({
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    originalPrice: product.discount_percentage > 0 ? product.price / (1 - product.discount_percentage / 100) : undefined,
-    image: product.image_url,
-    rating: 5, // Default rating
-    reviews: Math.floor(Math.random() * 500) + 50, // Random reviews for demo
-    isOnSale: product.discount_percentage > 0,
-    category: product.category,
-    description: product.description,
-    stock: product.stock
-  });
+  const transformProduct = (product: Product) => {
+    // Se há desconto, o preço no banco é o preço original
+    // Calcular o preço com desconto
+    const priceWithDiscount = product.discount_percentage > 0 
+      ? product.price * (1 - product.discount_percentage / 100)
+      : product.price;
+    
+    return {
+      id: product.id,
+      name: product.name,
+      price: priceWithDiscount,
+      originalPrice: product.discount_percentage > 0 ? product.price : undefined,
+      image: product.image_url,
+      rating: 5, // Default rating
+      reviews: Math.floor(Math.random() * 500) + 50, // Random reviews for demo
+      isOnSale: product.discount_percentage > 0,
+      category: product.category,
+      description: product.description,
+      stock: product.stock
+    };
+  };
 
   if (isLoading) {
     return (
@@ -98,12 +106,12 @@ const ProductGrid = () => {
     return matchesCategory && matchesSearch;
   });
 
-  // Limitar produtos exibidos (12 inicialmente, ou todos se showAllProducts for true, ou todos se houver busca)
+  // Limitar produtos exibidos (9 inicialmente, ou todos se showAllProducts for true, ou todos se houver busca)
   const displayedProducts = searchQuery || showAllProducts 
     ? filteredProducts 
-    : filteredProducts.slice(0, 12);
+    : filteredProducts.slice(0, 9);
 
-  const hasMoreProducts = filteredProducts.length > 12;
+  const hasMoreProducts = filteredProducts.length > 9;
 
   // Texto dinâmico baseado na categoria e busca
   const getCategoryTitle = () => {
@@ -137,7 +145,7 @@ const ProductGrid = () => {
       }
     })();
 
-    if (showAllProducts || totalProducts <= 12) {
+    if (showAllProducts || totalProducts <= 9) {
       return `${categoryDescription} Exibindo todos os ${totalProducts} produtos.`;
     } else {
       return `${categoryDescription} Exibindo ${displayedCount} de ${totalProducts} produtos.`;
