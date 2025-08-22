@@ -83,6 +83,36 @@ export type Database = {
         }
         Relationships: []
       }
+      product_specifications: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          id: string
+          label: string
+          product_id: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          label: string
+          product_id: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          label?: string
+          product_id?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string | null
