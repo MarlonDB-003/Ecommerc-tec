@@ -17,6 +17,7 @@ interface Product {
   rating: number;
   reviews: number;
   isOnSale?: boolean;
+  description?: string;
 }
 
 interface ProductModalProps {
@@ -177,25 +178,8 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Sobre o produto</h3>
               <p className="text-muted-foreground leading-relaxed">
-                {getProductDescription(product.name)}
+                {product.description || getProductDescription(product.name)}
               </p>
-            </div>
-
-            {/* Specifications */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Especificações</h3>
-              <div className="grid grid-cols-1 gap-2 text-sm">
-                {specifications.length > 0 ? (
-                  specifications.map((spec, index) => (
-                    <div key={index} className="flex justify-between py-2 border-b border-muted/30">
-                      <span className="font-medium">{spec.label}:</span>
-                      <span className="text-muted-foreground">{spec.value}</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">Nenhuma especificação cadastrada.</p>
-                )}
-              </div>
             </div>
 
             {/* Customer Reviews */}
@@ -237,6 +221,23 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
                   >
                     {showAllReviews ? 'Ver Menos Avaliações' : `Ver Todas as ${reviews.length} Avaliações`}
                   </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Specifications */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Especificações</h3>
+              <div className="grid grid-cols-1 gap-2 text-sm">
+                {specifications.length > 0 ? (
+                  specifications.map((spec, index) => (
+                    <div key={index} className="flex justify-between py-2 border-b border-muted/30">
+                      <span className="font-medium">{spec.label}:</span>
+                      <span className="text-muted-foreground">{spec.value}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nenhuma especificação cadastrada.</p>
                 )}
               </div>
             </div>
