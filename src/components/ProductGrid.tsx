@@ -106,12 +106,12 @@ const ProductGrid = () => {
     return matchesCategory && matchesSearch;
   });
 
-  // Limitar produtos exibidos (9 inicialmente, ou todos se showAllProducts for true, ou todos se houver busca)
+  // Limitar produtos exibidos (12 inicialmente, ou todos se showAllProducts for true, ou todos se houver busca)
   const displayedProducts = searchQuery || showAllProducts 
     ? filteredProducts 
-    : filteredProducts.slice(0, 9);
+    : filteredProducts.slice(0, 12);
 
-  const hasMoreProducts = filteredProducts.length > 9;
+  const hasMoreProducts = filteredProducts.length > 12;
 
   // Texto dinâmico baseado na categoria e busca
   const getCategoryTitle = () => {
@@ -145,7 +145,7 @@ const ProductGrid = () => {
       }
     })();
 
-    if (showAllProducts || totalProducts <= 9) {
+    if (showAllProducts || totalProducts <= 12) {
       return `${categoryDescription} Exibindo todos os ${totalProducts} produtos.`;
     } else {
       return `${categoryDescription} Exibindo ${displayedCount} de ${totalProducts} produtos.`;
