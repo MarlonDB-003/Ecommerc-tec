@@ -26,12 +26,21 @@ interface Product {
   discount_percentage: number;
 }
 
+interface ProductSpecification {
+  id?: string;
+  product_id: string;
+  label: string;
+  value: string;
+  display_order: number;
+}
+
 const Admin = () => {
   const { user, isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [specifications, setSpecifications] = useState<ProductSpecification[]>([]);
   const [productForm, setProductForm] = useState({
     name: '',
     description: '',
@@ -54,6 +63,14 @@ const Admin = () => {
     }
   }, [user, isAdmin]);
 
+  useEffect(() => {
+    if (editingProduct) {
+      fetchSpecifications(editingProduct.id);
+    } else {
+      setSpecifications([]);
+    }
+  }, [editingProduct]);
+
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase
@@ -73,6 +90,26 @@ const Admin = () => {
     }
   };
 
+  const fetchSpecifications = async (productId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('product_specifications')
+        .select('*')
+        .eq('product_id', productId)
+        .order('display_order');
+
+      if (error) throw error;
+      setSpecifications(data || []);
+    } catch (error) {
+      console.error('Error fetching specifications:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar especificações",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -85,9 +122,10 @@ const Admin = () => {
         image_url: productForm.image_url,
         category: productForm.category,
         stock: parseInt(productForm.stock),
-        discount_percentage: parseInt(productForm.discount_percentage) || 0,
-        is_active: true
+        discount_percentage: parseInt(productForm.discount_percentage) || 0
       };
+
+      let productId: string;
 
       if (editingProduct) {
         const { error } = await supabase
@@ -96,29 +134,64 @@ const Admin = () => {
           .eq('id', editingProduct.id);
 
         if (error) throw error;
+        productId = editingProduct.id;
+        
         toast({
           title: "Sucesso",
           description: "Produto atualizado com sucesso!",
         });
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('products')
-          .insert([productData]);
+          .insert([productData])
+          .select()
+          .single();
 
         if (error) throw error;
+        productId = data.id;
+        
         toast({
           title: "Sucesso",
-          description: "Produto cadastrado com sucesso!",
+          description: "Produto criado com sucesso!",
         });
       }
 
-      resetForm();
+      // Save specifications
+      if (specifications.length > 0) {
+        // Delete existing specifications if editing
+        if (editingProduct) {
+          await supabase
+            .from('product_specifications')
+            .delete()
+            .eq('product_id', productId);
+        }
+
+        // Insert new specifications
+        const specsToInsert = specifications
+          .filter(spec => spec.label && spec.value)
+          .map(spec => ({
+            product_id: productId,
+            label: spec.label,
+            value: spec.value,
+            display_order: spec.display_order
+          }));
+
+        if (specsToInsert.length > 0) {
+          const { error: specsError } = await supabase
+            .from('product_specifications')
+            .insert(specsToInsert);
+
+          if (specsError) throw specsError;
+        }
+      }
+
       fetchProducts();
+      resetForm();
     } catch (error) {
       console.error('Error saving product:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível salvar o produto",
+        description: "Erro ao salvar produto",
         variant: "destructive",
       });
     } finally {
@@ -143,6 +216,13 @@ const Admin = () => {
     if (!confirm('Tem certeza que deseja excluir este produto?')) return;
 
     try {
+      // First delete specifications
+      await supabase
+        .from('product_specifications')
+        .delete()
+        .eq('product_id', productId);
+
+      // Then delete the product
       const { error } = await supabase
         .from('products')
         .delete()
@@ -152,7 +232,7 @@ const Admin = () => {
       
       toast({
         title: "Sucesso",
-        description: "Produto excluído com sucesso!",
+        description: "Produto e especificações excluídos com sucesso!",
       });
       
       fetchProducts();
@@ -168,6 +248,7 @@ const Admin = () => {
 
   const resetForm = () => {
     setEditingProduct(null);
+    setSpecifications([]);
     setProductForm({
       name: '',
       description: '',
@@ -177,6 +258,25 @@ const Admin = () => {
       stock: '',
       discount_percentage: ''
     });
+  };
+
+  const addSpecification = () => {
+    setSpecifications([...specifications, {
+      product_id: '',
+      label: '',
+      value: '',
+      display_order: specifications.length
+    }]);
+  };
+
+  const updateSpecification = (index: number, field: string, value: string | number) => {
+    const updated = [...specifications];
+    updated[index] = { ...updated[index], [field]: value };
+    setSpecifications(updated);
+  };
+
+  const removeSpecification = (index: number) => {
+    setSpecifications(specifications.filter((_, i) => i !== index));
   };
 
   if (authLoading) {
@@ -237,7 +337,7 @@ const Admin = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="price">Preço (R$)</Label>
+                      <Label htmlFor="price">Preço Original (R$)</Label>
                       <Input
                         id="price"
                         type="number"
@@ -246,6 +346,9 @@ const Admin = () => {
                         onChange={(e) => setProductForm(prev => ({ ...prev, price: e.target.value }))}
                         required
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Este é o preço sem desconto. O desconto será aplicado automaticamente.
+                      </p>
                     </div>
                     
                     <div className="space-y-2">
@@ -269,6 +372,11 @@ const Admin = () => {
                         value={productForm.discount_percentage}
                         onChange={(e) => setProductForm(prev => ({ ...prev, discount_percentage: e.target.value }))}
                       />
+                      {productForm.price && productForm.discount_percentage && parseFloat(productForm.discount_percentage) > 0 && (
+                        <p className="text-xs text-green-600">
+                          Preço com desconto: R$ {(parseFloat(productForm.price) * (1 - parseFloat(productForm.discount_percentage) / 100)).toFixed(2)}
+                        </p>
+                      )}
                     </div>
                     
                     <div className="space-y-2">
@@ -280,6 +388,62 @@ const Admin = () => {
                         onChange={(e) => setProductForm(prev => ({ ...prev, image_url: e.target.value }))}
                       />
                     </div>
+                  </div>
+
+                  {/* Specifications Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-semibold">Especificações do Produto</Label>
+                      <Button type="button" variant="outline" size="sm" onClick={addSpecification}>
+                        Adicionar Especificação
+                      </Button>
+                    </div>
+                    
+                    {specifications.map((spec, index) => (
+                      <div key={index} className="flex gap-2 items-end">
+                        <div className="flex-1">
+                          <Label htmlFor={`spec-label-${index}`}>Especificação</Label>
+                          <Input
+                            id={`spec-label-${index}`}
+                            placeholder="Ex: GPU, Processador..."
+                            value={spec.label}
+                            onChange={(e) => updateSpecification(index, 'label', e.target.value)}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <Label htmlFor={`spec-value-${index}`}>Valor</Label>
+                          <Input
+                            id={`spec-value-${index}`}
+                            placeholder="Ex: NVIDIA RTX 4080..."
+                            value={spec.value}
+                            onChange={(e) => updateSpecification(index, 'value', e.target.value)}
+                          />
+                        </div>
+                        <div className="w-20">
+                          <Label htmlFor={`spec-order-${index}`}>Ordem</Label>
+                          <Input
+                            id={`spec-order-${index}`}
+                            type="number"
+                            value={spec.display_order}
+                            onChange={(e) => updateSpecification(index, 'display_order', parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removeSpecification(index)}
+                        >
+                          Remover
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    {specifications.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        Nenhuma especificação adicionada. Clique em "Adicionar Especificação" para começar.
+                      </p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -327,11 +491,20 @@ const Admin = () => {
                           <h3 className="font-semibold">{product.name}</h3>
                           <p className="text-sm text-muted-foreground">{product.category}</p>
                           <div className="flex items-center space-x-2 mt-1">
-                            <span className="font-medium">R$ {product.price.toFixed(2)}</span>
-                            {product.discount_percentage > 0 && (
-                              <Badge variant="secondary">
-                                -{product.discount_percentage}%
-                              </Badge>
+                            {product.discount_percentage > 0 ? (
+                              <>
+                                <span className="font-medium text-green-600">
+                                  R$ {(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
+                                </span>
+                                <span className="text-sm text-muted-foreground line-through">
+                                  R$ {product.price.toFixed(2)}
+                                </span>
+                                <Badge variant="secondary">
+                                  -{product.discount_percentage}%
+                                </Badge>
+                              </>
+                            ) : (
+                              <span className="font-medium">R$ {product.price.toFixed(2)}</span>
                             )}
                             <span className="text-sm text-muted-foreground">
                               Estoque: {product.stock}
