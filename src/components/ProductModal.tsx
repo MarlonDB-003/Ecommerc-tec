@@ -122,7 +122,7 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Truck className="h-4 w-4" />
-                <span>Entrega grátis para todo o Brasil</span>
+                <span>Entrega grátis para todo o Amazonas</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Shield className="h-4 w-4" />
@@ -182,6 +182,23 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
               </p>
             </div>
 
+            {/* Specifications */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Especificações</h3>
+              <div className="grid grid-cols-1 gap-2 text-sm">
+                {specifications.length > 0 ? (
+                  specifications.map((spec, index) => (
+                    <div key={index} className="flex justify-between py-2 border-b border-muted/30">
+                      <span className="font-medium">{spec.label}:</span>
+                      <span className="text-muted-foreground">{spec.value}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nenhuma especificação cadastrada.</p>
+                )}
+              </div>
+            </div>
+
             {/* Customer Reviews */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Avaliações dos Clientes</h3>
@@ -221,23 +238,6 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
                   >
                     {showAllReviews ? 'Ver Menos Avaliações' : `Ver Todas as ${reviews.length} Avaliações`}
                   </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Specifications */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Especificações</h3>
-              <div className="grid grid-cols-1 gap-2 text-sm">
-                {specifications.length > 0 ? (
-                  specifications.map((spec, index) => (
-                    <div key={index} className="flex justify-between py-2 border-b border-muted/30">
-                      <span className="font-medium">{spec.label}:</span>
-                      <span className="text-muted-foreground">{spec.value}</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">Nenhuma especificação cadastrada.</p>
                 )}
               </div>
             </div>
