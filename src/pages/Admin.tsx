@@ -337,7 +337,7 @@ const Admin = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="price">Preço (R$)</Label>
+                      <Label htmlFor="price">Preço Original (R$)</Label>
                       <Input
                         id="price"
                         type="number"
@@ -346,6 +346,9 @@ const Admin = () => {
                         onChange={(e) => setProductForm(prev => ({ ...prev, price: e.target.value }))}
                         required
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Este é o preço sem desconto. O desconto será aplicado automaticamente.
+                      </p>
                     </div>
                     
                     <div className="space-y-2">
@@ -369,6 +372,11 @@ const Admin = () => {
                         value={productForm.discount_percentage}
                         onChange={(e) => setProductForm(prev => ({ ...prev, discount_percentage: e.target.value }))}
                       />
+                      {productForm.price && productForm.discount_percentage && parseFloat(productForm.discount_percentage) > 0 && (
+                        <p className="text-xs text-green-600">
+                          Preço com desconto: R$ {(parseFloat(productForm.price) * (1 - parseFloat(productForm.discount_percentage) / 100)).toFixed(2)}
+                        </p>
+                      )}
                     </div>
                     
                     <div className="space-y-2">
@@ -483,11 +491,20 @@ const Admin = () => {
                           <h3 className="font-semibold">{product.name}</h3>
                           <p className="text-sm text-muted-foreground">{product.category}</p>
                           <div className="flex items-center space-x-2 mt-1">
-                            <span className="font-medium">R$ {product.price.toFixed(2)}</span>
-                            {product.discount_percentage > 0 && (
-                              <Badge variant="secondary">
-                                -{product.discount_percentage}%
-                              </Badge>
+                            {product.discount_percentage > 0 ? (
+                              <>
+                                <span className="font-medium text-green-600">
+                                  R$ {(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
+                                </span>
+                                <span className="text-sm text-muted-foreground line-through">
+                                  R$ {product.price.toFixed(2)}
+                                </span>
+                                <Badge variant="secondary">
+                                  -{product.discount_percentage}%
+                                </Badge>
+                              </>
+                            ) : (
+                              <span className="font-medium">R$ {product.price.toFixed(2)}</span>
                             )}
                             <span className="text-sm text-muted-foreground">
                               Estoque: {product.stock}
