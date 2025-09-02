@@ -121,9 +121,9 @@ const ProductGrid = () => {
     
     switch (selectedCategory) {
       case 'smartphones': return 'Smartphones & Tablets';
-      case 'gaming': return 'Produtos Gaming';
-      case 'computadores': return 'Computadores & Notebooks';
-      case 'componentes': return 'Componentes de Hardware';
+      case 'gaming': return 'Gaming Zone';
+      case 'consoles': return 'Consoles';
+      case 'componentes': return 'Componentes & Acessórios';
       default: return 'Produtos em Destaque';
     }
   };
@@ -138,14 +138,14 @@ const ProductGrid = () => {
     const categoryDescription = (() => {
       switch (selectedCategory) {
         case 'smartphones': return 'Os melhores smartphones, tablets e acessórios móveis do mercado.';
-        case 'gaming': return 'Equipamentos gaming profissionais para uma experiência única.';
-        case 'computadores': return 'Notebooks e desktops para trabalho e entretenimento.';
-        case 'componentes': return 'Componentes de hardware para montagem e upgrade de PCs.';
+        case 'gaming': return 'Computadores, notebooks e equipamentos gaming profissionais para uma experiência única.';
+        case 'consoles': return 'Consoles Xbox, PlayStation e outros videogames para sua diversão.';
+        case 'componentes': return 'Mouse, teclados, gabinetes, placas de vídeo e componentes para seu setup.';
         default: return 'Descubra os melhores produtos eletrônicos, gaming e componentes para tecnologia de ponta.';
       }
     })();
 
-    if (showAllProducts || totalProducts <= 12) {
+    if (showAllProducts || totalProducts <= 9) {
       return `${categoryDescription} Exibindo todos os ${totalProducts} produtos.`;
     } else {
       return `${categoryDescription} Exibindo ${displayedCount} de ${totalProducts} produtos.`;
