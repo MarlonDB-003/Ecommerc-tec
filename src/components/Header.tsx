@@ -27,7 +27,7 @@ const Header = () => {
   const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const handleNavigation = (category: 'todos' | 'smartphones' | 'gaming' | 'computadores' | 'componentes') => {
+  const handleNavigation = (category: 'todos' | 'smartphones' | 'gaming' | 'consoles' | 'componentes') => {
     navigate('/');
     setSelectedCategory(category);
     setIsMobileMenuOpen(false); // Fechar menu mobile após navegação
@@ -77,10 +77,10 @@ const Header = () => {
             Gaming
           </button>
           <button 
-            onClick={() => handleNavigation('computadores')}
-            className={`transition-colors ${selectedCategory === 'computadores' ? 'text-primary' : 'text-foreground hover:text-primary'}`}
+            onClick={() => handleNavigation('consoles')}
+            className={`transition-colors ${selectedCategory === 'consoles' ? 'text-primary' : 'text-foreground hover:text-primary'}`}
           >
-            Computadores
+            Consoles
           </button>
           <button 
             onClick={() => handleNavigation('componentes')}
@@ -156,10 +156,10 @@ const Header = () => {
                     Gaming
                   </button>
                   <button 
-                    onClick={() => handleNavigation('computadores')}
-                    className={`block w-full text-left py-2 px-3 rounded-md transition-colors ${selectedCategory === 'computadores' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'}`}
+                    onClick={() => handleNavigation('consoles')}
+                    className={`block w-full text-left py-2 px-3 rounded-md transition-colors ${selectedCategory === 'consoles' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'}`}
                   >
-                    Computadores
+                    Consoles
                   </button>
                   <button 
                     onClick={() => handleNavigation('componentes')}
