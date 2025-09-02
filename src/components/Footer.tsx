@@ -6,7 +6,7 @@ const Footer = () => {
   const { setSelectedCategory } = useCategory();
   const navigate = useNavigate();
 
-  const handleCategoryClick = (category: 'smartphones' | 'gaming' | 'computadores' | 'componentes') => {
+  const handleCategoryClick = (category: 'smartphones' | 'gaming' | 'consoles' | 'componentes') => {
     setSelectedCategory(category);
     navigate('/');
     setTimeout(() => {
@@ -57,10 +57,10 @@ const Footer = () => {
               </li>
               <li>
                 <button 
-                  onClick={() => handleCategoryClick('computadores')} 
+                  onClick={() => handleCategoryClick('consoles')} 
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Computadores
+                  Consoles
                 </button>
               </li>
               <li>
@@ -95,11 +95,11 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground">(92) 99999-9999</span>
+                <span className="text-muted-foreground">(11) 9999-9999</span>
               </div>
               <div className="flex items-center space-x-3">
                 <MapPin className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground">Itacoatiara, AM</span>
+                <span className="text-muted-foreground">São Paulo, SP</span>
               </div>
             </div>
           </div>
@@ -107,7 +107,7 @@ const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-8 text-center">
           <p className="text-muted-foreground">
-            © 2025 TechWorld. Todos os direitos reservados.
+            © 2024 TechWorld. Todos os direitos reservados.
           </p>
         </div>
       </div>
