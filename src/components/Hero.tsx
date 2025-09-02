@@ -5,20 +5,6 @@ import techHero from "@/assets/tech-hero.jpg";
 const Hero = () => {
   const { setSelectedCategory } = useCategory();
 
-  const handleVerProdutos = () => {
-    setSelectedCategory('todos');
-    setTimeout(() => {
-      document.getElementById('produtos')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
-
-  const handleGamingZone = () => {
-    setSelectedCategory('gaming');
-    setTimeout(() => {
-      document.getElementById('produtos')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
-
   return (
     <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
