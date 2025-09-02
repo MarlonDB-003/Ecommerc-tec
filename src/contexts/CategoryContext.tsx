@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 
-type Category = 'todos' | 'smartphones' | 'gaming' | 'computadores' | 'componentes';
+type Category = 'todos' | 'smartphones' | 'gaming' | 'consoles' | 'componentes';
 
 interface CategoryContextType {
   selectedCategory: Category;
