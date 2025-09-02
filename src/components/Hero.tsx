@@ -5,20 +5,6 @@ import techHero from "@/assets/tech-hero.jpg";
 const Hero = () => {
   const { setSelectedCategory } = useCategory();
 
-  const handleVerProdutos = () => {
-    setSelectedCategory('todos');
-    setTimeout(() => {
-      document.getElementById('produtos')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
-
-  const handleGamingZone = () => {
-    setSelectedCategory('gaming');
-    setTimeout(() => {
-      document.getElementById('produtos')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
-
   return (
     <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
@@ -42,23 +28,6 @@ const Hero = () => {
           Os melhores produtos eletrônicos, gaming e componentes para você montar o setup dos seus sonhos.
         </p>
         
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button 
-            size="lg" 
-            className="text-lg px-8 py-6 bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary transition-all duration-300 shadow-lg hover:shadow-xl"
-            onClick={handleVerProdutos}
-          >
-            Ver Produtos
-          </Button>
-          <Button 
-            variant="outline" 
-            size="lg" 
-            className="text-lg px-8 py-6 border-2 hover:bg-primary/5 transition-all duration-300"
-            onClick={handleGamingZone}
-          >
-            Gaming Zone
-          </Button>
-        </div>
       </div>
     </section>
   );
