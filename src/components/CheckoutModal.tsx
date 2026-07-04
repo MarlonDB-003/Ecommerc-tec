@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import { orderService, toApiPaymentMethod } from "@/services/orderService";
 
 // ── Shipping calculation from Manaus/AM ───────────────────────────────────────
 
@@ -103,6 +104,7 @@ const CheckoutModal = ({ isOpen, onClose, onBack, singleProduct, includeCartItem
   const [shippingOption, setShippingOption] = useState<string>("");
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [isCalcShipping, setIsCalcShipping] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [customerInfo, setCustomerInfo] = useState({ name: "", email: "", phone: "" });
   const [addressInfo, setAddressInfo]   = useState({
@@ -224,10 +226,37 @@ const CheckoutModal = ({ isOpen, onClose, onBack, singleProduct, includeCartItem
     setStep(STEPS[currentIndex - 1].id);
   };
 
-  const handleConfirm = () => {
-    toast({ title: "Pedido confirmado! (Mock)", description: "Simulação concluída. Nenhum pagamento real foi processado." });
-    if (includeCartItems || !singleProduct) clearCart();
-    onClose();
+  const handleConfirm = async () => {
+    setIsSubmitting(true);
+    try {
+      await orderService.create({
+        items: checkoutItems.map(i => ({ productId: i.id, quantity: i.quantity })),
+        customerInfo: {
+          name: customerInfo.name,
+          email: customerInfo.email,
+          phone: customerInfo.phone,
+        },
+        addressInfo: {
+          cep: addressInfo.cep,
+          street: addressInfo.street,
+          number: addressInfo.number,
+          complement: addressInfo.complement || null,
+          neighborhood: addressInfo.neighborhood,
+          city: addressInfo.city,
+          state: addressInfo.state,
+        },
+        paymentMethod: toApiPaymentMethod(paymentMethod),
+        installments: paymentMethod === "credit-card" ? installments : 1,
+      });
+      toast({ title: "Pedido realizado!", description: "Acompanhe em Meus Pedidos." });
+      if (includeCartItems || !singleProduct) clearCart();
+      onClose();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao finalizar pedido";
+      toast({ title: "Erro ao finalizar pedido", description: message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // ── Step indicator ─────────────────────────────────────────────────────────
@@ -553,8 +582,11 @@ const CheckoutModal = ({ isOpen, onClose, onBack, singleProduct, includeCartItem
               </p>
             </div>
 
-            <div className="p-3 border border-orange-200 bg-orange-50 rounded-lg">
-              <p className="text-sm text-orange-800"><strong>⚠️ Modo de Teste:</strong> Simulação — nenhum pagamento real será processado.</p>
+            <div className="p-3 border rounded-lg bg-muted/20">
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                Ao confirmar, seu pedido será registrado e você poderá acompanhá-lo em <strong>Meus Pedidos</strong>.
+              </p>
             </div>
           </div>
         );
@@ -593,8 +625,10 @@ const CheckoutModal = ({ isOpen, onClose, onBack, singleProduct, includeCartItem
             {isFirst ? (singleProduct ? "Voltar ao Produto" : "Voltar ao Carrinho") : "Voltar"}
           </Button>
           {isLast ? (
-            <Button onClick={handleConfirm} className="flex-1 bg-primary hover:bg-primary/90">
-              Confirmar Pedido
+            <Button onClick={handleConfirm} className="flex-1 bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" />Processando...</>
+              ) : "Confirmar Pedido"}
             </Button>
           ) : (
             <Button onClick={goNext} className="flex-1 bg-primary hover:bg-primary/90" disabled={step === "entrega" && isCalcShipping}>

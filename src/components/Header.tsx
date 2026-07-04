@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShoppingCart, Search, User, Menu, X, LogOut, Shield } from "lucide-react";
+import { ShoppingCart, Search, User, Menu, X, LogOut, Shield, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -174,9 +174,9 @@ const Header = () => {
                   {user ? (
                     <div className="space-y-2">
                       {isAdmin && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="flex items-center gap-2 w-full justify-start"
                           onClick={() => {
                             navigate('/admin');
@@ -187,9 +187,21 @@ const Header = () => {
                           Painel Admin
                         </Button>
                       )}
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2 w-full justify-start"
+                        onClick={() => {
+                          navigate('/meus-pedidos');
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        <Package className="h-4 w-4" />
+                        Meus Pedidos
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         className="flex items-center gap-2 w-full justify-start"
                         onClick={() => {
                           signOut();
@@ -245,6 +257,10 @@ const Header = () => {
                     Painel Admin
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuItem onClick={() => navigate('/meus-pedidos')}>
+                  <Package className="mr-2 h-4 w-4" />
+                  Meus Pedidos
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Sair
