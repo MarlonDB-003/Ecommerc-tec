@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { authService } from '@/services/authService';
 import { toast } from '@/hooks/use-toast';
 
-const TOKEN_KEY = 'tw_token';
 const USER_KEY = 'tw_user';
 
 export interface AuthUser {
@@ -44,24 +43,33 @@ function loadStoredUser(): AuthUser | null {
   }
 }
 
-function storeSession(token: string, user: AuthUser) {
-  localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
-}
-
-function clearSession() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
-}
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stored = loadStoredUser();
-    setUser(stored);
-    setIsLoading(false);
+    // Show cached profile instantly while we validate the session with the server
+    const cached = loadStoredUser();
+    if (cached) setUser(cached);
+
+    authService.me()
+      .then(serverUser => {
+        const authUser: AuthUser = {
+          userId: serverUser.userId,
+          email: serverUser.email,
+          displayName: serverUser.displayName,
+          isAdmin: serverUser.isAdmin,
+          avatarUrl: cached?.avatarUrl,
+        };
+        setUser(authUser);
+        localStorage.setItem(USER_KEY, JSON.stringify(authUser));
+      })
+      .catch(() => {
+        // Cookie expired or missing — clear stale cache
+        setUser(null);
+        localStorage.removeItem(USER_KEY);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
   const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
@@ -73,22 +81,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         displayName: res.displayName,
         isAdmin: res.isAdmin,
       };
-      storeSession(res.token, authUser);
+      localStorage.setItem(USER_KEY, JSON.stringify(authUser));
       setUser(authUser);
-
-      toast({
-        title: 'Login realizado com sucesso!',
-        description: 'Bem-vindo de volta.',
-      });
-
+      toast({ title: 'Login realizado com sucesso!', description: 'Bem-vindo de volta.' });
       return { error: null };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro ao fazer login';
-      toast({
-        title: 'Erro no login',
-        description: message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro no login', description: message, variant: 'destructive' });
       return { error: message };
     }
   };
@@ -106,33 +105,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         displayName: res.displayName,
         isAdmin: false,
       };
-      storeSession(res.token, authUser);
+      localStorage.setItem(USER_KEY, JSON.stringify(authUser));
       setUser(authUser);
-
-      toast({
-        title: 'Cadastro realizado com sucesso!',
-        description: 'Sua conta foi criada.',
-      });
-
+      toast({ title: 'Cadastro realizado com sucesso!', description: 'Sua conta foi criada.' });
       return { error: null };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro ao criar conta';
-      toast({
-        title: 'Erro no cadastro',
-        description: message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro no cadastro', description: message, variant: 'destructive' });
       return { error: message };
     }
   };
 
   const signOut = async () => {
-    clearSession();
+    try {
+      await authService.logout();
+    } catch {
+      // Clear state regardless of server response
+    }
+    localStorage.removeItem(USER_KEY);
     setUser(null);
-    toast({
-      title: 'Logout realizado com sucesso!',
-      description: 'Até logo!',
-    });
+    toast({ title: 'Logout realizado com sucesso!', description: 'Até logo!' });
   };
 
   const updateUser = (updates: Partial<AuthUser>) => {

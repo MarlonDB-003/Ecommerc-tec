@@ -5,14 +5,19 @@ export interface LoginResponse {
   email: string;
   displayName: string | null;
   isAdmin: boolean;
-  token: string;
 }
 
 export interface RegisterResponse {
   userId: string;
   email: string;
   displayName: string | null;
-  token: string;
+}
+
+export interface MeResponse {
+  userId: string;
+  email: string;
+  displayName: string | null;
+  isAdmin: boolean;
 }
 
 export const authService = {
@@ -21,4 +26,10 @@ export const authService = {
 
   register: (email: string, password: string, displayName?: string) =>
     api.post<RegisterResponse>('/api/auth/register', { email, password, displayName }),
+
+  logout: () =>
+    api.post<void>('/api/auth/logout', {}),
+
+  me: () =>
+    api.get<MeResponse>('/api/auth/me'),
 };

@@ -1,17 +1,11 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5274';
 
-function getToken(): string | null {
-  return localStorage.getItem('tw_token');
-}
-
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers, credentials: 'include' });
 
   if (!res.ok) {
     let message = `HTTP ${res.status}`;
@@ -38,10 +32,9 @@ export const api = {
     request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: (path: string) => request<void>(path, { method: 'DELETE' }),
   postMultipart: async <T>(path: string, formData: FormData): Promise<T> => {
-    const token = getToken();
     const res = await fetch(`${BASE_URL}${path}`, {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: 'include',
       body: formData,
     });
     if (!res.ok) {
@@ -55,13 +48,12 @@ export const api = {
     return res.json() as T;
   },
   uploadImage: async (file: File): Promise<string> => {
-    const token = getToken();
     const formData = new FormData();
     formData.append('image', file);
 
     const res = await fetch(`${BASE_URL}/api/images/upload`, {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: 'include',
       body: formData,
     });
 
