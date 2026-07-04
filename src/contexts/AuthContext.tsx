@@ -9,6 +9,7 @@ export interface AuthUser {
   userId: string;
   email: string;
   displayName: string | null;
+  avatarUrl?: string | null;
   isAdmin: boolean;
 }
 
@@ -20,6 +21,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  updateUser: (updates: Partial<AuthUser>) => void;
   isAdmin: boolean;
 }
 
@@ -133,6 +135,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const updateUser = (updates: Partial<AuthUser>) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...updates };
+      localStorage.setItem(USER_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const isAdmin = user?.isAdmin ?? false;
   const userRole = isAdmin ? 'admin' : user ? 'user' : null;
 
@@ -146,6 +157,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signIn,
         signUp,
         signOut,
+        updateUser,
         isAdmin,
       }}
     >

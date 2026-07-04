@@ -37,6 +37,23 @@ export const api = {
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: (path: string) => request<void>(path, { method: 'DELETE' }),
+  postMultipart: async <T>(path: string, formData: FormData): Promise<T> => {
+    const token = getToken();
+    const res = await fetch(`${BASE_URL}${path}`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      let message = `HTTP ${res.status}`;
+      try {
+        const body = await res.json();
+        message = body?.detail ?? body?.title ?? body?.message ?? message;
+      } catch { /* ignore */ }
+      throw new Error(message);
+    }
+    return res.json() as T;
+  },
   uploadImage: async (file: File): Promise<string> => {
     const token = getToken();
     const formData = new FormData();
