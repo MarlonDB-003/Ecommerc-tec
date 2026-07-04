@@ -4,44 +4,32 @@ import ProductCard from "./ProductCard";
 import ProductModal from "./ProductModal";
 import { useCategory } from "@/contexts/CategoryContext";
 import { useSearch } from "@/contexts/SearchContext";
-import { supabase } from "@/integrations/supabase/client";
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image_url: string;
-  category: string;
-  stock: number;
-  is_active: boolean;
-  discount_percentage: number;
-}
+import { productService, ProductListItem } from "@/services/productService";
 
 const ProductGrid = () => {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductListItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAllProducts, setShowAllProducts] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { selectedCategory } = useCategory();
   const { searchQuery } = useSearch();
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [selectedCategory, searchQuery]);
 
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setProducts(data || []);
+      setShowAllProducts(false);
+      const result = await productService.getAll({
+        category: selectedCategory,
+        search: searchQuery || undefined,
+        isActive: true,
+        pageSize: 100,
+      });
+      setProducts(result.items);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -49,7 +37,7 @@ const ProductGrid = () => {
     }
   };
 
-  const handleProductClick = (product: Product) => {
+  const handleProductClick = (product: ProductListItem) => {
     setSelectedProduct(product);
     setIsModalOpen(true);
   };
@@ -59,28 +47,19 @@ const ProductGrid = () => {
     setSelectedProduct(null);
   };
 
-  // Converter produto do banco para formato do componente
-  const transformProduct = (product: Product) => {
-    // Se há desconto, o preço no banco é o preço original
-    // Calcular o preço com desconto
-    const priceWithDiscount = product.discount_percentage > 0 
-      ? product.price * (1 - product.discount_percentage / 100)
-      : product.price;
-    
-    return {
-      id: product.id,
-      name: product.name,
-      price: priceWithDiscount,
-      originalPrice: product.discount_percentage > 0 ? product.price : undefined,
-      image: product.image_url,
-      rating: 5, // Default rating
-      reviews: Math.floor(Math.random() * 500) + 50, // Random reviews for demo
-      isOnSale: product.discount_percentage > 0,
-      category: product.category,
-      description: product.description,
-      stock: product.stock
-    };
-  };
+  const transformProduct = (product: ProductListItem) => ({
+    id: product.id,
+    name: product.name,
+    price: product.discountedPrice,
+    originalPrice: product.discountPercentage > 0 ? product.price : undefined,
+    image: product.imageUrl ?? '',
+    rating: 5,
+    reviews: 128,
+    isOnSale: product.discountPercentage > 0,
+    category: product.category,
+    description: product.description ?? undefined,
+    stock: product.stock,
+  });
 
   if (isLoading) {
     return (
@@ -94,81 +73,59 @@ const ProductGrid = () => {
     );
   }
 
-  // Filtrar produtos por categoria e busca
-  const filteredProducts = products.filter(product => {
-    // Filtro por categoria
-    const matchesCategory = selectedCategory === 'todos' || product.category === selectedCategory;
-    
-    // Filtro por busca (nome do produto)
-    const matchesSearch = searchQuery === '' || 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    return matchesCategory && matchesSearch;
-  });
+  const displayedProducts = showAllProducts ? products : products.slice(0, 12);
+  const hasMoreProducts = products.length > 12;
 
-  // Limitar produtos exibidos (12 inicialmente, ou todos se showAllProducts for true, ou todos se houver busca)
-  const displayedProducts = searchQuery || showAllProducts 
-    ? filteredProducts 
-    : filteredProducts.slice(0, 12);
-
-  const hasMoreProducts = filteredProducts.length > 12;
-
-  // Texto dinâmico baseado na categoria e busca
   const getCategoryTitle = () => {
-    if (searchQuery) {
-      return `Resultados para "${searchQuery}"`;
-    }
-    
+    if (searchQuery) return `Resultados para "${searchQuery}"`;
     switch (selectedCategory) {
       case 'smartphones': return 'Smartphones & Tablets';
       case 'gaming': return 'Gaming Zone';
       case 'consoles': return 'Consoles';
       case 'componentes': return 'Componentes & Acessórios';
+      case 'computadores': return 'Computadores & Notebooks';
       default: return 'Produtos em Destaque';
     }
   };
 
   const getCategoryDescription = () => {
     if (searchQuery) {
-      return `Encontrados ${filteredProducts.length} produto(s) relacionado(s) à sua busca.`;
+      return `Encontrados ${products.length} produto(s) relacionado(s) à sua busca.`;
     }
-    
-    const totalProducts = filteredProducts.length;
-    const displayedCount = displayedProducts.length;
-    const categoryDescription = (() => {
+    const base = (() => {
       switch (selectedCategory) {
         case 'smartphones': return 'Os melhores smartphones, tablets e acessórios móveis do mercado.';
         case 'gaming': return 'Computadores, notebooks e equipamentos gaming profissionais para uma experiência única.';
         case 'consoles': return 'Consoles Xbox, PlayStation e outros videogames para sua diversão.';
         case 'componentes': return 'Mouse, teclados, gabinetes, placas de vídeo e componentes para seu setup.';
+        case 'computadores': return 'Notebooks e desktops de alta performance para trabalho e entretenimento.';
         default: return 'Descubra os melhores produtos eletrônicos, gaming e componentes para tecnologia de ponta.';
       }
     })();
-
-    if (showAllProducts || totalProducts <= 9) {
-      return `${categoryDescription} Exibindo todos os ${totalProducts} produtos.`;
-    } else {
-      return `${categoryDescription} Exibindo ${displayedCount} de ${totalProducts} produtos.`;
+    if (showAllProducts || products.length <= 12) {
+      return `${base} Exibindo todos os ${products.length} produtos.`;
     }
+    return `${base} Exibindo ${displayedProducts.length} de ${products.length} produtos.`;
   };
 
   return (
-    <section id="produtos" className="py-16 bg-muted/30">
+    <section id="produtos" className="py-8 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
             {getCategoryTitle()}
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
             {getCategoryDescription()}
           </p>
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {displayedProducts.map((product) => (
             <ProductCard
               key={product.id}
               {...transformProduct(product)}
+              compact
               onClick={() => handleProductClick(product)}
             />
           ))}
@@ -177,27 +134,25 @@ const ProductGrid = () => {
         {displayedProducts.length === 0 && (
           <div className="text-center py-12">
             <p className="text-lg text-muted-foreground">
-              {searchQuery 
+              {searchQuery
                 ? `Nenhum produto encontrado para "${searchQuery}".`
-                : 'Nenhum produto encontrado nesta categoria.'
-              }
+                : 'Nenhum produto encontrado nesta categoria.'}
             </p>
           </div>
         )}
-        
-        {/* Botões de Ver Todos / Ver Menos */}
+
         {!searchQuery && hasMoreProducts && (
-          <div className="text-center mt-12">
+          <div className="text-center mt-6">
             {!showAllProducts ? (
-              <Button 
+              <Button
                 onClick={() => setShowAllProducts(true)}
                 className="px-8 py-3 font-semibold"
                 variant="outline"
               >
-                Ver Todos os Produtos ({filteredProducts.length})
+                Ver Todos os Produtos ({products.length})
               </Button>
             ) : (
-              <Button 
+              <Button
                 onClick={() => setShowAllProducts(false)}
                 className="px-8 py-3 font-semibold"
                 variant="outline"
@@ -208,8 +163,8 @@ const ProductGrid = () => {
           </div>
         )}
       </div>
-      
-      <ProductModal 
+
+      <ProductModal
         product={selectedProduct ? transformProduct(selectedProduct) : null}
         isOpen={isModalOpen}
         onClose={handleCloseModal}

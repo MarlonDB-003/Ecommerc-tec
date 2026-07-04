@@ -43,20 +43,20 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (signupForm.password !== signupForm.confirmPassword) {
       alert('As senhas não coincidem');
       return;
     }
-    
+
     setIsLoading(true);
-    
-    const { error } = await signUp(
-      signupForm.email, 
-      signupForm.password, 
-      signupForm.displayName
-    );
-    
+
+    const { error } = await signUp(signupForm.email, signupForm.password, signupForm.displayName);
+
+    if (!error) {
+      navigate('/');
+    }
+
     setIsLoading(false);
   };
 

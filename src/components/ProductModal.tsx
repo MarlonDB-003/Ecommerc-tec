@@ -6,7 +6,7 @@ import { Heart, Star, ShoppingCart, Truck, Shield, RotateCcw, User } from "lucid
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import CheckoutModal from "./CheckoutModal";
-import { supabase } from "@/integrations/supabase/client";
+import { productService } from "@/services/productService";
 
 interface Product {
   id: string;
@@ -41,19 +41,13 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
 
   const fetchSpecifications = async () => {
     if (!product) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('product_specifications')
-        .select('label, value')
-        .eq('product_id', product.id)
-        .order('display_order');
 
-      if (error) throw error;
-      setSpecifications(data || []);
+    try {
+      const detail = await productService.getById(product.id);
+      const sorted = [...detail.specifications].sort((a, b) => a.displayOrder - b.displayOrder);
+      setSpecifications(sorted.map(s => ({ label: s.label, value: s.value })));
     } catch (error) {
       console.error('Error fetching specifications:', error);
-      // Fallback to static specs if fetch fails
       setSpecifications(getProductSpecs(product.name));
     }
   };

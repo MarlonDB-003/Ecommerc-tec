@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { productService, ProductListItem } from '@/services/productService';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductFormModal from '@/components/ProductFormModal';
@@ -12,23 +12,11 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { Trash2, Edit, Plus } from 'lucide-react';
 
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image_url: string;
-  category: string;
-  stock: number;
-  is_active: boolean;
-  discount_percentage: number;
-}
-
 const Admin = () => {
   const { user, isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [products, setProducts] = useState<ProductListItem[]>([]);
+  const [editingProduct, setEditingProduct] = useState<ProductListItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -45,24 +33,19 @@ const Admin = () => {
 
   const fetchProducts = async () => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setProducts(data || []);
+      const result = await productService.getAll({ pageSize: 100 });
+      setProducts(result.items);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível carregar os produtos",
-        variant: "destructive",
+        title: 'Erro',
+        description: 'Não foi possível carregar os produtos',
+        variant: 'destructive',
       });
     }
   };
 
-  const handleEdit = (product: Product) => {
+  const handleEdit = (product: ProductListItem) => {
     setEditingProduct(product);
     setIsModalOpen(true);
   };
@@ -76,43 +59,19 @@ const Admin = () => {
     if (!confirm('Tem certeza que deseja excluir este produto?')) return;
 
     try {
-      // First delete specifications
-      await supabase
-        .from('product_specifications')
-        .delete()
-        .eq('product_id', productId);
-
-      // Then delete the product
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', productId);
-
-      if (error) throw error;
-      
-      toast({
-        title: "Sucesso",
-        description: "Produto e especificações excluídos com sucesso!",
-      });
-      
+      await productService.delete(productId);
+      toast({ title: 'Sucesso', description: 'Produto excluído com sucesso!' });
       fetchProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível excluir o produto",
-        variant: "destructive",
-      });
+      const message = error instanceof Error ? error.message : 'Não foi possível excluir o produto';
+      toast({ title: 'Erro', description: message, variant: 'destructive' });
     }
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingProduct(null);
-  };
-
-  const handleProductSaved = () => {
-    fetchProducts();
   };
 
   if (authLoading) {
@@ -126,7 +85,7 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Painel Administrativo</h1>
@@ -158,9 +117,9 @@ const Admin = () => {
                   {products.map((product) => (
                     <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center space-x-4">
-                        {product.image_url && (
-                          <img 
-                            src={product.image_url} 
+                        {product.imageUrl && (
+                          <img
+                            src={product.imageUrl}
                             alt={product.name}
                             className="w-16 h-16 object-cover rounded"
                           />
@@ -169,16 +128,16 @@ const Admin = () => {
                           <h3 className="font-semibold">{product.name}</h3>
                           <p className="text-sm text-muted-foreground">{product.category}</p>
                           <div className="flex items-center space-x-2 mt-1">
-                            {product.discount_percentage > 0 ? (
+                            {product.discountPercentage > 0 ? (
                               <>
                                 <span className="font-medium text-green-600">
-                                  R$ {(product.price * (1 - product.discount_percentage / 100)).toFixed(2)}
+                                  R$ {product.discountedPrice.toFixed(2)}
                                 </span>
                                 <span className="text-sm text-muted-foreground line-through">
                                   R$ {product.price.toFixed(2)}
                                 </span>
                                 <Badge variant="secondary">
-                                  -{product.discount_percentage}%
+                                  -{product.discountPercentage}%
                                 </Badge>
                               </>
                             ) : (
@@ -190,26 +149,18 @@ const Admin = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(product)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => handleEdit(product)}>
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(product.id)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => handleDelete(product.id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
                   ))}
-                  
+
                   {products.length === 0 && (
                     <div className="text-center text-muted-foreground py-8">
                       <p>Nenhum produto cadastrado ainda.</p>
@@ -239,14 +190,14 @@ const Admin = () => {
           </TabsContent>
         </Tabs>
 
-        <ProductFormModal 
+        <ProductFormModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           editingProduct={editingProduct}
-          onProductSaved={handleProductSaved}
+          onProductSaved={fetchProducts}
         />
       </main>
-      
+
       <Footer />
     </div>
   );
