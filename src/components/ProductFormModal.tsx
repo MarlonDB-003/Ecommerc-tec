@@ -32,6 +32,7 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
     price: '',
     imageUrl: '',
     category: '',
+    brand: '',
     stock: '',
     discountPercentage: '',
   });
@@ -44,6 +45,7 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
         price: editingProduct.price.toString(),
         imageUrl: editingProduct.imageUrl ?? '',
         category: editingProduct.category,
+        brand: editingProduct.brand ?? '',
         stock: editingProduct.stock.toString(),
         discountPercentage: editingProduct.discountPercentage.toString(),
       });
@@ -79,6 +81,7 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
         price: parseFloat(productForm.price),
         imageUrl: productForm.imageUrl || null,
         category: productForm.category,
+        brand: productForm.brand || null,
         stock: parseInt(productForm.stock),
         discountPercentage: parseInt(productForm.discountPercentage) || 0,
         specifications: specs,
@@ -106,7 +109,7 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
 
   const resetForm = () => {
     setSpecifications([]);
-    setProductForm({ name: '', description: '', price: '', imageUrl: '', category: '', stock: '', discountPercentage: '' });
+    setProductForm({ name: '', description: '', price: '', imageUrl: '', category: '', brand: '', stock: '', discountPercentage: '' });
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -178,6 +181,16 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
                 value={productForm.category}
                 onChange={(e) => setProductForm(prev => ({ ...prev, category: e.target.value }))}
                 required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="brand">Marca</Label>
+              <Input
+                id="brand"
+                placeholder="Ex: Samsung, Apple, Asus..."
+                value={productForm.brand}
+                onChange={(e) => setProductForm(prev => ({ ...prev, brand: e.target.value }))}
               />
             </div>
 

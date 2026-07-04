@@ -8,6 +8,7 @@ export interface ProductListItem {
   discountedPrice: number;
   imageUrl: string | null;
   category: string;
+  brand: string | null;
   stock: number;
   isActive: boolean;
   discountPercentage: number;
@@ -45,6 +46,7 @@ export interface ProductPayload {
   name: string;
   price: number;
   category: string;
+  brand?: string | null;
   description?: string | null;
   imageUrl?: string | null;
   stock: number;
@@ -61,6 +63,7 @@ export const productService = {
     category?: string;
     search?: string;
     isActive?: boolean;
+    brand?: string;
     page?: number;
     pageSize?: number;
     sortBy?: string;
@@ -72,6 +75,7 @@ export const productService = {
     }
     if (params.search) qs.set('search', params.search);
     if (params.isActive !== undefined) qs.set('isActive', String(params.isActive));
+    if (params.brand) qs.set('brand', params.brand);
     if (params.page) qs.set('page', String(params.page));
     if (params.pageSize) qs.set('pageSize', String(params.pageSize));
     if (params.sortBy) qs.set('sortBy', params.sortBy);
