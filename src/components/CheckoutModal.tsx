@@ -113,8 +113,6 @@ const CheckoutModal = ({ isOpen, onClose, onBack, singleProduct, includeCartItem
     cep: "", street: "", number: "", complement: "",
     neighborhood: "", city: "", state: "", country: "Brasil",
   });
-  const [cardInfo, setCardInfo] = useState({ number: "", expiry: "", cvv: "", name: "" });
-
   const [savedAddresses, setSavedAddresses]   = useState<AddressDto[]>([]);
   const [addressMode, setAddressMode]         = useState<"saved" | "new">("new");
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -599,36 +597,8 @@ const CheckoutModal = ({ isOpen, onClose, onBack, singleProduct, includeCartItem
 
             {(paymentMethod === "credit-card" || paymentMethod === "debit-card") && (
               <div className="space-y-3 p-4 border rounded-lg bg-muted/10">
-                <h4 className="font-medium text-sm">Dados do Cartão</h4>
-                <div className="space-y-1.5">
-                  <Label>Número do Cartão</Label>
-                  <Input value={cardInfo.number}
-                    onChange={e => setCardInfo(p => ({ ...p, number: e.target.value }))}
-                    placeholder="1234 5678 9012 3456" maxLength={19} />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label>Validade</Label>
-                    <Input value={cardInfo.expiry}
-                      onChange={e => setCardInfo(p => ({ ...p, expiry: e.target.value }))}
-                      placeholder="MM/AA" maxLength={5} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>CVV</Label>
-                    <Input value={cardInfo.cvv}
-                      onChange={e => setCardInfo(p => ({ ...p, cvv: e.target.value }))}
-                      placeholder="123" maxLength={4} />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Nome no Cartão</Label>
-                  <Input value={cardInfo.name}
-                    onChange={e => setCardInfo(p => ({ ...p, name: e.target.value }))}
-                    placeholder="Nome como está no cartão" />
-                </div>
-
                 {paymentMethod === "credit-card" && (
-                  <div className="mt-2">
+                  <div>
                     <Label className="text-sm mb-2 block">Parcelamento</Label>
                     <RadioGroup value={installments.toString()} onValueChange={v => setInstallments(parseInt(v))}>
                       <div className="grid grid-cols-1 gap-1 max-h-36 overflow-y-auto pr-1">
@@ -642,6 +612,10 @@ const CheckoutModal = ({ isOpen, onClose, onBack, singleProduct, includeCartItem
                     </RadioGroup>
                   </div>
                 )}
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
+                  <Lock className="h-3 w-3 shrink-0" />
+                  Os dados do cartão serão inseridos com segurança na etapa de pagamento do gateway.
+                </p>
               </div>
             )}
 
