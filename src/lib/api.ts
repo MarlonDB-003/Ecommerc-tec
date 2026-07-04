@@ -35,4 +35,27 @@ export const api = {
   put: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
   delete: (path: string) => request<void>(path, { method: 'DELETE' }),
+  uploadImage: async (file: File): Promise<string> => {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const res = await fetch(`${BASE_URL}/api/images/upload`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+
+    if (!res.ok) {
+      let message = `HTTP ${res.status}`;
+      try {
+        const body = await res.json();
+        message = body?.detail ?? body?.title ?? message;
+      } catch { /* ignore */ }
+      throw new Error(message);
+    }
+
+    const data = await res.json();
+    return data.url as string;
+  },
 };

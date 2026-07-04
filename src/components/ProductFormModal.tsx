@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { productService, ProductListItem, SpecificationInput } from '@/services/productService';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,7 +23,9 @@ interface ProductFormModalProps {
 
 const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: ProductFormModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [specifications, setSpecifications] = useState<SpecRow[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [productForm, setProductForm] = useState({
     name: '',
     description: '',
@@ -104,6 +107,25 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
   const resetForm = () => {
     setSpecifications([]);
     setProductForm({ name: '', description: '', price: '', imageUrl: '', category: '', stock: '', discountPercentage: '' });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const url = await api.uploadImage(file);
+      setProductForm(prev => ({ ...prev, imageUrl: url }));
+      toast({ title: 'Imagem enviada', description: 'Upload concluído com sucesso.' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao fazer upload';
+      toast({ title: 'Erro no upload', description: message, variant: 'destructive' });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const addSpecification = () => {
@@ -203,13 +225,48 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="imageUrl">URL da Imagem</Label>
-              <Input
-                id="imageUrl"
-                type="url"
-                value={productForm.imageUrl}
-                onChange={(e) => setProductForm(prev => ({ ...prev, imageUrl: e.target.value }))}
-              />
+              <Label>Imagem do Produto</Label>
+              <div className="flex flex-col gap-2">
+                {productForm.imageUrl && (
+                  <img
+                    src={productForm.imageUrl}
+                    alt="Preview"
+                    className="h-32 w-32 object-cover rounded-md border"
+                  />
+                )}
+                <div className="flex gap-2 items-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isUploading}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {isUploading ? 'Enviando...' : productForm.imageUrl ? 'Trocar imagem' : 'Selecionar imagem'}
+                  </Button>
+                  {productForm.imageUrl && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setProductForm(prev => ({ ...prev, imageUrl: '' }));
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                    >
+                      Remover
+                    </Button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+                <p className="text-xs text-muted-foreground">JPEG, PNG, WebP ou GIF — máx. 5MB</p>
+              </div>
             </div>
           </div>
 
@@ -275,7 +332,7 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
 
           <div className="flex gap-2 justify-end">
             <Button type="button" variant="outline" onClick={handleClose}>Cancelar</Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || isUploading}>
               {isLoading ? 'Salvando...' : editingProduct ? 'Atualizar' : 'Cadastrar'}
             </Button>
           </div>
