@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShoppingCart, Search, User, Menu, X, LogOut, Shield, Package } from "lucide-react";
+import { ShoppingCart, Search, User, Menu, X, LogOut, Shield, Package, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -204,6 +204,18 @@ const Header = () => {
                         size="sm"
                         className="flex items-center gap-2 w-full justify-start"
                         onClick={() => {
+                          navigate('/meus-enderecos');
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        <MapPin className="h-4 w-4" />
+                        Meus Endereços
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2 w-full justify-start"
+                        onClick={() => {
                           signOut();
                           setIsMobileMenuOpen(false);
                         }}
@@ -260,6 +272,10 @@ const Header = () => {
                 <DropdownMenuItem onClick={() => navigate('/meus-pedidos')}>
                   <Package className="mr-2 h-4 w-4" />
                   Meus Pedidos
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/meus-enderecos')}>
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Meus Endereços
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" />

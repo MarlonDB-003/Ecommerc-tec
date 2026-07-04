@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
   CreditCard, Smartphone, QrCode, ArrowLeft, Lock,
-  Calendar, User, MapPin, Truck, CheckCircle, Check, Loader2, Package,
+  Calendar, User, MapPin, Truck, CheckCircle, Check, Loader2, Package, Plus,
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { orderService, toApiPaymentMethod } from "@/services/orderService";
+import { addressService, AddressDto } from "@/services/addressService";
 
 // ── Shipping calculation from Manaus/AM ───────────────────────────────────────
 
@@ -113,8 +115,42 @@ const CheckoutModal = ({ isOpen, onClose, onBack, singleProduct, includeCartItem
   });
   const [cardInfo, setCardInfo] = useState({ number: "", expiry: "", cvv: "", name: "" });
 
+  const [savedAddresses, setSavedAddresses]   = useState<AddressDto[]>([]);
+  const [addressMode, setAddressMode]         = useState<"saved" | "new">("new");
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+
   const { items, clearCart } = useCart();
+  const { user } = useAuth();
   const { toast } = useToast();
+
+  // Pre-fill contact info and load saved addresses when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (user) {
+      setCustomerInfo(p => ({
+        ...p,
+        name:  p.name  || user.displayName || "",
+        email: p.email || user.email       || "",
+      }));
+    }
+
+    addressService.getMyAddresses()
+      .then(addresses => {
+        setSavedAddresses(addresses);
+        if (addresses.length > 0) {
+          const def = addresses.find(a => a.isDefault) ?? addresses[0];
+          setSelectedAddressId(def.id);
+          setAddressMode("saved");
+          setAddressInfo({
+            cep: def.cep, street: def.street, number: def.number,
+            complement: def.complement ?? "", neighborhood: def.neighborhood,
+            city: def.city, state: def.state, country: "Brasil",
+          });
+        }
+      })
+      .catch(() => { /* silently ignore — user can still type address */ });
+  }, [isOpen, user]);
 
   // ── Order items & totals ───────────────────────────────────────────────────
 
@@ -204,7 +240,11 @@ const CheckoutModal = ({ isOpen, onClose, onBack, singleProduct, includeCartItem
       }
     }
     if (step === "endereco") {
-      if (!addressInfo.cep || !addressInfo.street || !addressInfo.number || !addressInfo.city || !addressInfo.state) {
+      if (addressMode === "saved" && !selectedAddressId) {
+        toast({ title: "Selecione um endereço", variant: "destructive" });
+        return false;
+      }
+      if (addressMode === "new" && (!addressInfo.cep || !addressInfo.street || !addressInfo.number || !addressInfo.city || !addressInfo.state)) {
         toast({ title: "Preencha o endereço", description: "CEP, rua, número, cidade e estado são obrigatórios.", variant: "destructive" });
         return false;
       }
@@ -249,6 +289,20 @@ const CheckoutModal = ({ isOpen, onClose, onBack, singleProduct, includeCartItem
         installments: paymentMethod === "credit-card" ? installments : 1,
       });
       toast({ title: "Pedido realizado!", description: "Acompanhe em Meus Pedidos." });
+
+      // Auto-save new address for future checkouts
+      if (addressMode === "new") {
+        addressService.create({
+          cep: addressInfo.cep,
+          street: addressInfo.street,
+          number: addressInfo.number,
+          complement: addressInfo.complement || null,
+          neighborhood: addressInfo.neighborhood,
+          city: addressInfo.city,
+          state: addressInfo.state,
+        }).catch(() => { /* silently ignore */ });
+      }
+
       if (includeCartItems || !singleProduct) clearCart();
       onClose();
     } catch (error) {
@@ -344,61 +398,130 @@ const CheckoutModal = ({ isOpen, onClose, onBack, singleProduct, includeCartItem
       case "endereco":
         return (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="cep">CEP *</Label>
-                <Input id="cep" value={addressInfo.cep} onChange={handleCEPChange}
-                  placeholder="00000-000" maxLength={9} />
+            {/* Saved addresses */}
+            {savedAddresses.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Endereços salvos
+                </p>
+                {savedAddresses.map(addr => (
+                  <button
+                    key={addr.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedAddressId(addr.id);
+                      setAddressMode("saved");
+                      setAddressInfo({
+                        cep: addr.cep, street: addr.street, number: addr.number,
+                        complement: addr.complement ?? "", neighborhood: addr.neighborhood,
+                        city: addr.city, state: addr.state, country: "Brasil",
+                      });
+                    }}
+                    className={`w-full text-left p-3 border rounded-lg text-sm transition-colors
+                      ${addressMode === "saved" && selectedAddressId === addr.id
+                        ? "border-primary bg-primary/5"
+                        : "hover:bg-muted/30 border-border"}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        {addr.label && <p className="font-medium">{addr.label}</p>}
+                        <p className={addr.label ? "text-muted-foreground" : "font-medium"}>
+                          {addr.street}, {addr.number}
+                          {addr.complement ? ` — ${addr.complement}` : ""}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          {addr.neighborhood} · {addr.city}/{addr.state} · {addr.cep}
+                        </p>
+                      </div>
+                      {addr.isDefault && (
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">
+                          Padrão
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddressMode("new");
+                    setSelectedAddressId(null);
+                    setAddressInfo({ cep: "", street: "", number: "", complement: "", neighborhood: "", city: "", state: "", country: "Brasil" });
+                  }}
+                  className={`w-full text-left p-3 border rounded-lg text-sm transition-colors flex items-center gap-2
+                    ${addressMode === "new"
+                      ? "border-primary bg-primary/5"
+                      : "hover:bg-muted/30 border-border"}`}
+                >
+                  <Plus className="h-4 w-4 text-muted-foreground" />
+                  <span>Usar novo endereço</span>
+                </button>
+
+                {addressMode === "new" && <Separator />}
               </div>
-              <div className="md:col-span-2 space-y-1.5">
-                <Label htmlFor="street">Rua / Avenida *</Label>
-                <Input id="street" value={addressInfo.street}
-                  onChange={e => setAddressInfo(p => ({ ...p, street: e.target.value }))}
-                  placeholder="Nome da rua, avenida..." />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="number">Número *</Label>
-                <Input id="number" value={addressInfo.number}
-                  onChange={e => setAddressInfo(p => ({ ...p, number: e.target.value }))}
-                  placeholder="123" />
-              </div>
-              <div className="md:col-span-2 space-y-1.5">
-                <Label htmlFor="complement">Complemento</Label>
-                <Input id="complement" value={addressInfo.complement}
-                  onChange={e => setAddressInfo(p => ({ ...p, complement: e.target.value }))}
-                  placeholder="Apto, bloco... (opcional)" />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="neighborhood">Bairro *</Label>
-                <Input id="neighborhood" value={addressInfo.neighborhood}
-                  onChange={e => setAddressInfo(p => ({ ...p, neighborhood: e.target.value }))}
-                  placeholder="Nome do bairro" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="city">Cidade *</Label>
-                <Input id="city" value={addressInfo.city}
-                  onChange={e => setAddressInfo(p => ({ ...p, city: e.target.value }))}
-                  placeholder="Nome da cidade" />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="state">Estado *</Label>
-                <Input id="state" value={addressInfo.state}
-                  onChange={e => setAddressInfo(p => ({ ...p, state: e.target.value }))}
-                  placeholder="AM" maxLength={2} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="country">País</Label>
-                <Input id="country" value={addressInfo.country}
-                  onChange={e => setAddressInfo(p => ({ ...p, country: e.target.value }))}
-                  placeholder="Brasil" />
-              </div>
-            </div>
+            )}
+
+            {/* Address form — shown when mode is "new" or no saved addresses exist */}
+            {addressMode === "new" && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cep">CEP *</Label>
+                    <Input id="cep" value={addressInfo.cep} onChange={handleCEPChange}
+                      placeholder="00000-000" maxLength={9} />
+                  </div>
+                  <div className="md:col-span-2 space-y-1.5">
+                    <Label htmlFor="street">Rua / Avenida *</Label>
+                    <Input id="street" value={addressInfo.street}
+                      onChange={e => setAddressInfo(p => ({ ...p, street: e.target.value }))}
+                      placeholder="Nome da rua, avenida..." />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="number">Número *</Label>
+                    <Input id="number" value={addressInfo.number}
+                      onChange={e => setAddressInfo(p => ({ ...p, number: e.target.value }))}
+                      placeholder="123" />
+                  </div>
+                  <div className="md:col-span-2 space-y-1.5">
+                    <Label htmlFor="complement">Complemento</Label>
+                    <Input id="complement" value={addressInfo.complement}
+                      onChange={e => setAddressInfo(p => ({ ...p, complement: e.target.value }))}
+                      placeholder="Apto, bloco... (opcional)" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="neighborhood">Bairro *</Label>
+                    <Input id="neighborhood" value={addressInfo.neighborhood}
+                      onChange={e => setAddressInfo(p => ({ ...p, neighborhood: e.target.value }))}
+                      placeholder="Nome do bairro" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="city">Cidade *</Label>
+                    <Input id="city" value={addressInfo.city}
+                      onChange={e => setAddressInfo(p => ({ ...p, city: e.target.value }))}
+                      placeholder="Nome da cidade" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="state">Estado *</Label>
+                    <Input id="state" value={addressInfo.state}
+                      onChange={e => setAddressInfo(p => ({ ...p, state: e.target.value }))}
+                      placeholder="AM" maxLength={2} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="country">País</Label>
+                    <Input id="country" value={addressInfo.country}
+                      onChange={e => setAddressInfo(p => ({ ...p, country: e.target.value }))}
+                      placeholder="Brasil" />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         );
 

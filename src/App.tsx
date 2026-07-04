@@ -17,6 +17,7 @@ import Contato from "./pages/Contato";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import OrderHistory from "./pages/OrderHistory";
+import AddressManagement from "./pages/AddressManagement";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/meus-pedidos" element={<OrderHistory />} />
+                  <Route path="/meus-enderecos" element={<AddressManagement />} />
                   <Route path="/central-ajuda" element={<CentralAjuda />} />
                   <Route path="/politica-devolucao" element={<PoliticaDevolucao />} />
                   <Route path="/frete-entrega" element={<FreteEntrega />} />

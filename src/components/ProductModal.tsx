@@ -4,7 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Heart, Star, ShoppingCart, Truck, Shield, RotateCcw, User } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import CheckoutModal from "./CheckoutModal";
 import { productService } from "@/services/productService";
 
@@ -31,7 +33,9 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [specifications, setSpecifications] = useState<Array<{label: string, value: string}>>([]);
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   useEffect(() => {
     if (product && isOpen) {
@@ -77,6 +81,12 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
   };
 
   const handleBuyNow = () => {
+    if (!user) {
+      onClose();
+      toast({ title: "Faça login para continuar", description: "É necessário estar logado para finalizar a compra." });
+      navigate("/auth");
+      return;
+    }
     setIsCheckoutOpen(true);
   };
 
