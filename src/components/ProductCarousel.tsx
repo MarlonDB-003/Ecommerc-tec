@@ -89,13 +89,13 @@ const ProductCarousel = ({ title, description, type }: ProductCarouselProps) => 
   }
 
   return (
-    <section className="py-8 bg-card/50 border-y">
+    <section className="py-10">
       <div className="container mx-auto px-8">
-        <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-            {title}
-          </h2>
-          <p className="text-muted-foreground">{description}</p>
+        <div className="mb-6 flex items-end gap-4">
+          <div className="border-l-4 border-primary pl-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground">{title}</h2>
+            <p className="text-muted-foreground text-sm mt-0.5">{description}</p>
+          </div>
         </div>
 
         <div className="relative">

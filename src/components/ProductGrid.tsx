@@ -112,7 +112,7 @@ const ProductGrid = () => {
     <section id="produtos" className="py-8 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">
             {getCategoryTitle()}
           </h2>
           <p className="text-sm text-muted-foreground max-w-2xl mx-auto">

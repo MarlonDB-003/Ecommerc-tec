@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -88,7 +88,7 @@ const ProductCard = ({
 
           <Button
             onClick={handleAddToCart}
-            className="w-full text-[10px] bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary transition-all duration-300"
+            className="w-full text-[10px] bg-primary hover:bg-primary/90"
             size="sm"
             style={{ height: '28px', padding: '0 8px' }}
           >
@@ -115,34 +115,13 @@ const ProductCard = ({
           </div>
         )}
 
-        {/* Favorite Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-3 right-3 bg-background/80 backdrop-blur-sm hover:bg-background/90 transition-all duration-200"
-        >
-          <Heart className="h-4 w-4" />
-        </Button>
       </div>
 
       <CardContent className="p-3 sm:p-4">
-        {/* Rating */}
-        <div className="flex items-center gap-1 mb-2">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`h-4 w-4 ${i < rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
-            />
-          ))}
-          <span className="text-sm text-muted-foreground ml-2">({reviews})</span>
-        </div>
-
-        {/* Product Name */}
         <h3 className="font-semibold text-sm sm:text-base text-card-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
           {name}
         </h3>
 
-        {/* Price */}
         <div className="flex items-center gap-2 mb-3 sm:mb-4">
           <span className="text-lg sm:text-xl font-bold text-price">
             R$ {price.toFixed(2)}
@@ -154,10 +133,9 @@ const ProductCard = ({
           )}
         </div>
 
-        {/* Add to Cart Button */}
         <Button
           onClick={handleAddToCart}
-          className="w-full text-xs sm:text-sm bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary transition-all duration-300 shadow-md hover:shadow-lg"
+          className="w-full text-xs sm:text-sm bg-primary hover:bg-primary/90"
           size="sm"
         >
           <span className="hidden sm:inline">Adicionar ao Carrinho</span>

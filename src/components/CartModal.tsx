@@ -166,7 +166,7 @@ const CartModal = ({ isOpen, onClose }: CartModalProps) => {
             </Button>
             <Button 
               onClick={handleCheckout}
-              className="bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary"
+              className="bg-primary hover:bg-primary/90"
             >
               Finalizar Compra
             </Button>

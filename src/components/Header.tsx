@@ -50,8 +50,8 @@ const Header = () => {
         {/* Logo */}
         <div className="flex items-center">
           <button onClick={() => handleNavigation('todos')}>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent hover:opacity-80 transition-opacity">
-              TechWorld
+            <h1 className="text-2xl font-black tracking-tight hover:opacity-80 transition-opacity">
+              Tech<span className="text-primary">World</span>
             </h1>
           </button>
         </div>

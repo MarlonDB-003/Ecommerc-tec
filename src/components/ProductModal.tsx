@@ -240,7 +240,7 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
             <div className="space-y-3 pt-4">
               <Button 
                 onClick={handleAddToCart}
-                className="w-full h-12 bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary transition-all duration-300"
+                className="w-full h-12 bg-primary hover:bg-primary/90"
                 size="lg"
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />

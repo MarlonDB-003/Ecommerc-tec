@@ -516,7 +516,7 @@ const CheckoutModal = ({ isOpen, onClose, onBack, singleProduct, includeCartItem
             </Button>
             <Button 
               onClick={handleProcessPayment}
-              className="bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary"
+              className="bg-primary hover:bg-primary/90"
             >
               Confirmar Pagamento
             </Button>
