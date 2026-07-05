@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Environment variables (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# Backend secrets
+backend/src/TechWorld.API/appsettings.Development.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

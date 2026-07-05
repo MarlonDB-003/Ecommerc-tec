@@ -4,7 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Trash2, Plus, Minus, X } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import CheckoutModal from "./CheckoutModal";
 
 interface CartModalProps {
@@ -14,7 +16,9 @@ interface CartModalProps {
 
 const CartModal = ({ isOpen, onClose }: CartModalProps) => {
   const { items, removeFromCart, updateQuantity, clearCart, getTotalPrice } = useCart();
+  const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const handleRemoveItem = (id: string, name: string) => {
@@ -38,6 +42,12 @@ const CartModal = ({ isOpen, onClose }: CartModalProps) => {
   };
 
   const handleCheckout = () => {
+    if (!user) {
+      onClose();
+      toast({ title: "Faça login para continuar", description: "É necessário estar logado para finalizar a compra." });
+      navigate("/auth");
+      return;
+    }
     onClose();
     setIsCheckoutOpen(true);
   };
@@ -166,7 +176,7 @@ const CartModal = ({ isOpen, onClose }: CartModalProps) => {
             </Button>
             <Button 
               onClick={handleCheckout}
-              className="bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary"
+              className="bg-primary hover:bg-primary/90"
             >
               Finalizar Compra
             </Button>

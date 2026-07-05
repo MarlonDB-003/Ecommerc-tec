@@ -15,19 +15,19 @@ const Index = () => {
       <main>
         <Hero />
         {selectedCategory === 'todos' ? (
-          <div className="bg-muted/30">
-            <ProductCarousel 
-              title="Ofertas Imperdíveis" 
+          <div className="divide-y divide-border">
+            <ProductCarousel
+              title="Ofertas Imperdíveis"
               description="Os produtos com os melhores descontos para você economizar mais!"
               type="discounts"
             />
-            <ProductCarousel 
-              title="Lançamentos Recentes" 
+            <ProductCarousel
+              title="Lançamentos Recentes"
               description="Os últimos produtos cadastrados em nossa loja."
               type="recent"
             />
-            <ProductCarousel 
-              title="Gaming Zone" 
+            <ProductCarousel
+              title="Gaming Zone"
               description="Equipamentos gaming profissionais para uma experiência única."
               type="gaming"
             />

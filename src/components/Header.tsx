@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShoppingCart, Search, User, Menu, X, LogOut, Shield } from "lucide-react";
+import { ShoppingCart, Search, User, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,17 +10,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import CartModal from "./CartModal";
 import ThemeToggle from "./ThemeToggle";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import UserSidebar from "./UserSidebar";
 
 const Header = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserSidebarOpen, setIsUserSidebarOpen] = useState(false);
   const { getTotalItems } = useCart();
   const { selectedCategory, setSelectedCategory } = useCategory();
   const { searchQuery, setSearchQuery } = useSearch();
@@ -50,8 +46,8 @@ const Header = () => {
         {/* Logo */}
         <div className="flex items-center">
           <button onClick={() => handleNavigation('todos')}>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent hover:opacity-80 transition-opacity">
-              TechWorld
+            <h1 className="text-2xl font-black tracking-tight hover:opacity-80 transition-opacity">
+              Tech<span className="text-primary">World</span>
             </h1>
           </button>
         </div>
@@ -172,38 +168,23 @@ const Header = () => {
                 {/* Mobile User Actions */}
                 <div className="flex items-center justify-between pt-4 border-t border-border">
                   {user ? (
-                    <div className="space-y-2">
-                      {isAdmin && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="flex items-center gap-2 w-full justify-start"
-                          onClick={() => {
-                            navigate('/admin');
-                            setIsMobileMenuOpen(false);
-                          }}
-                        >
-                          <Shield className="h-4 w-4" />
-                          Painel Admin
-                        </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      onClick={() => { setIsMobileMenuOpen(false); setIsUserSidebarOpen(true); }}
+                    >
+                      {user?.avatarUrl ? (
+                        <img src={user.avatarUrl} alt="Avatar" className="h-5 w-5 rounded-full object-cover" />
+                      ) : (
+                        <User className="h-4 w-4" />
                       )}
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="flex items-center gap-2 w-full justify-start"
-                        onClick={() => {
-                          signOut();
-                          setIsMobileMenuOpen(false);
-                        }}
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Sair
-                      </Button>
-                    </div>
+                      Minha Conta
+                    </Button>
                   ) : (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="flex items-center gap-2"
                       onClick={() => {
                         navigate('/auth');
@@ -223,61 +204,43 @@ const Header = () => {
 
         {/* Actions */}
         <div className="flex items-center space-x-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="hidden sm:flex"
             onClick={() => setIsSearchOpen(!isSearchOpen)}
           >
             <Search className="h-5 w-5" />
           </Button>
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="hidden sm:flex">
-                  <User className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {isAdmin && (
-                  <DropdownMenuItem onClick={() => navigate('/admin')}>
-                    <Shield className="mr-2 h-4 w-4" />
-                    Painel Admin
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={signOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="hidden sm:flex"
-              onClick={() => navigate('/auth')}
-            >
-              <User className="h-5 w-5" />
-            </Button>
-          )}
           <div className="hidden sm:block">
             <ThemeToggle />
           </div>
           {/* Cart Icon */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="relative"
             onClick={() => setIsCartOpen(true)}
           >
             <ShoppingCart className="h-5 w-5" />
             {getTotalItems() > 0 && (
-              <Badge 
+              <Badge
                 className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-primary text-primary-foreground"
               >
                 {getTotalItems()}
               </Badge>
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden sm:flex"
+            onClick={() => user ? setIsUserSidebarOpen(true) : navigate('/auth')}
+          >
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="Avatar" className="h-7 w-7 rounded-full object-cover" />
+            ) : (
+              <User className="h-5 w-5" />
             )}
           </Button>
           {/* Mobile Menu Button */}
@@ -293,6 +256,7 @@ const Header = () => {
       </div>
       
       <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <UserSidebar isOpen={isUserSidebarOpen} onClose={() => setIsUserSidebarOpen(false)} />
     </header>
   );
 };

@@ -4,9 +4,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Heart, Star, ShoppingCart, Truck, Shield, RotateCcw, User } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import CheckoutModal from "./CheckoutModal";
-import { supabase } from "@/integrations/supabase/client";
+import { productService } from "@/services/productService";
 
 interface Product {
   id: string;
@@ -31,7 +33,9 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [specifications, setSpecifications] = useState<Array<{label: string, value: string}>>([]);
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   useEffect(() => {
     if (product && isOpen) {
@@ -41,19 +45,13 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
 
   const fetchSpecifications = async () => {
     if (!product) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('product_specifications')
-        .select('label, value')
-        .eq('product_id', product.id)
-        .order('display_order');
 
-      if (error) throw error;
-      setSpecifications(data || []);
+    try {
+      const detail = await productService.getById(product.id);
+      const sorted = [...detail.specifications].sort((a, b) => a.displayOrder - b.displayOrder);
+      setSpecifications(sorted.map(s => ({ label: s.label, value: s.value })));
     } catch (error) {
       console.error('Error fetching specifications:', error);
-      // Fallback to static specs if fetch fails
       setSpecifications(getProductSpecs(product.name));
     }
   };
@@ -83,6 +81,12 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
   };
 
   const handleBuyNow = () => {
+    if (!user) {
+      onClose();
+      toast({ title: "Faça login para continuar", description: "É necessário estar logado para finalizar a compra." });
+      navigate("/auth");
+      return;
+    }
     setIsCheckoutOpen(true);
   };
 
@@ -246,7 +250,7 @@ const ProductModal = ({ product, isOpen, onClose }: ProductModalProps) => {
             <div className="space-y-3 pt-4">
               <Button 
                 onClick={handleAddToCart}
-                className="w-full h-12 bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary transition-all duration-300"
+                className="w-full h-12 bg-primary hover:bg-primary/90"
                 size="lg"
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />

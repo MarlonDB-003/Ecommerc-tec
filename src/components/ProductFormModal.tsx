@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useState, useEffect, useRef } from 'react';
+import { productService, ProductListItem, SpecificationInput } from '@/services/productService';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,56 +8,46 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image_url: string;
-  category: string;
-  stock: number;
-  is_active: boolean;
-  discount_percentage: number;
-}
-
-interface ProductSpecification {
-  id?: string;
-  product_id: string;
+interface SpecRow {
   label: string;
   value: string;
-  display_order: number;
+  displayOrder: number;
 }
 
 interface ProductFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  editingProduct: Product | null;
+  editingProduct: ProductListItem | null;
   onProductSaved: () => void;
 }
 
 const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: ProductFormModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [specifications, setSpecifications] = useState<ProductSpecification[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [specifications, setSpecifications] = useState<SpecRow[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [productForm, setProductForm] = useState({
     name: '',
     description: '',
     price: '',
-    image_url: '',
+    imageUrl: '',
     category: '',
+    brand: '',
     stock: '',
-    discount_percentage: ''
+    discountPercentage: '',
   });
 
   useEffect(() => {
     if (editingProduct) {
       setProductForm({
         name: editingProduct.name,
-        description: editingProduct.description || '',
+        description: editingProduct.description ?? '',
         price: editingProduct.price.toString(),
-        image_url: editingProduct.image_url || '',
-        category: editingProduct.category || '',
+        imageUrl: editingProduct.imageUrl ?? '',
+        category: editingProduct.category,
+        brand: editingProduct.brand ?? '',
         stock: editingProduct.stock.toString(),
-        discount_percentage: editingProduct.discount_percentage.toString()
+        discountPercentage: editingProduct.discountPercentage.toString(),
       });
       fetchSpecifications(editingProduct.id);
     } else {
@@ -66,21 +57,12 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
 
   const fetchSpecifications = async (productId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('product_specifications')
-        .select('*')
-        .eq('product_id', productId)
-        .order('display_order');
-
-      if (error) throw error;
-      setSpecifications(data || []);
+      const detail = await productService.getById(productId);
+      const sorted = [...detail.specifications].sort((a, b) => a.displayOrder - b.displayOrder);
+      setSpecifications(sorted.map(s => ({ label: s.label, value: s.value, displayOrder: s.displayOrder })));
     } catch (error) {
       console.error('Error fetching specifications:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar especificações",
-        variant: "destructive",
-      });
+      toast({ title: 'Erro', description: 'Erro ao carregar especificações', variant: 'destructive' });
     }
   };
 
@@ -89,74 +71,28 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
     setIsLoading(true);
 
     try {
-      const productData = {
+      const specs: SpecificationInput[] = specifications
+        .filter(s => s.label && s.value)
+        .map((s, i) => ({ label: s.label, value: s.value, displayOrder: s.displayOrder > 0 ? s.displayOrder : i }));
+
+      const payload = {
         name: productForm.name,
-        description: productForm.description,
+        description: productForm.description || null,
         price: parseFloat(productForm.price),
-        image_url: productForm.image_url,
+        imageUrl: productForm.imageUrl || null,
         category: productForm.category,
+        brand: productForm.brand || null,
         stock: parseInt(productForm.stock),
-        discount_percentage: parseInt(productForm.discount_percentage) || 0
+        discountPercentage: parseInt(productForm.discountPercentage) || 0,
+        specifications: specs,
       };
 
-      let productId: string;
-
       if (editingProduct) {
-        const { error } = await supabase
-          .from('products')
-          .update(productData)
-          .eq('id', editingProduct.id);
-
-        if (error) throw error;
-        productId = editingProduct.id;
-        
-        toast({
-          title: "Sucesso",
-          description: "Produto atualizado com sucesso!",
-        });
+        await productService.update(editingProduct.id, payload);
+        toast({ title: 'Sucesso', description: 'Produto atualizado com sucesso!' });
       } else {
-        const { data, error } = await supabase
-          .from('products')
-          .insert([productData])
-          .select()
-          .single();
-
-        if (error) throw error;
-        productId = data.id;
-        
-        toast({
-          title: "Sucesso",
-          description: "Produto criado com sucesso!",
-        });
-      }
-
-      // Save specifications
-      if (specifications.length > 0) {
-        // Delete existing specifications if editing
-        if (editingProduct) {
-          await supabase
-            .from('product_specifications')
-            .delete()
-            .eq('product_id', productId);
-        }
-
-        // Insert new specifications
-        const specsToInsert = specifications
-          .filter(spec => spec.label && spec.value)
-          .map(spec => ({
-            product_id: productId,
-            label: spec.label,
-            value: spec.value,
-            display_order: spec.display_order
-          }));
-
-        if (specsToInsert.length > 0) {
-          const { error: specsError } = await supabase
-            .from('product_specifications')
-            .insert(specsToInsert);
-
-          if (specsError) throw specsError;
-        }
+        await productService.create(payload);
+        toast({ title: 'Sucesso', description: 'Produto criado com sucesso!' });
       }
 
       onProductSaved();
@@ -164,11 +100,8 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
       resetForm();
     } catch (error) {
       console.error('Error saving product:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao salvar produto",
-        variant: "destructive",
-      });
+      const message = error instanceof Error ? error.message : 'Erro ao salvar produto';
+      toast({ title: 'Erro', description: message, variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -176,24 +109,30 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
 
   const resetForm = () => {
     setSpecifications([]);
-    setProductForm({
-      name: '',
-      description: '',
-      price: '',
-      image_url: '',
-      category: '',
-      stock: '',
-      discount_percentage: ''
-    });
+    setProductForm({ name: '', description: '', price: '', imageUrl: '', category: '', brand: '', stock: '', discountPercentage: '' });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const url = await api.uploadImage(file);
+      setProductForm(prev => ({ ...prev, imageUrl: url }));
+      toast({ title: 'Imagem enviada', description: 'Upload concluído com sucesso.' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao fazer upload';
+      toast({ title: 'Erro no upload', description: message, variant: 'destructive' });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const addSpecification = () => {
-    setSpecifications([...specifications, {
-      product_id: '',
-      label: '',
-      value: '',
-      display_order: specifications.length
-    }]);
+    setSpecifications([...specifications, { label: '', value: '', displayOrder: specifications.length }]);
   };
 
   const updateSpecification = (index: number, field: string, value: string | number) => {
@@ -234,7 +173,7 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="category">Categoria</Label>
               <Input
@@ -244,7 +183,17 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
                 required
               />
             </div>
-            
+
+            <div className="space-y-2">
+              <Label htmlFor="brand">Marca</Label>
+              <Input
+                id="brand"
+                placeholder="Ex: Samsung, Apple, Asus..."
+                value={productForm.brand}
+                onChange={(e) => setProductForm(prev => ({ ...prev, brand: e.target.value }))}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="price">Preço Original (R$)</Label>
               <Input
@@ -259,7 +208,7 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
                 Este é o preço sem desconto. O desconto será aplicado automaticamente.
               </p>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="stock">Estoque</Label>
               <Input
@@ -270,7 +219,7 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="discount">Desconto (%)</Label>
               <Input
@@ -278,28 +227,62 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
                 type="number"
                 min="0"
                 max="100"
-                value={productForm.discount_percentage}
-                onChange={(e) => setProductForm(prev => ({ ...prev, discount_percentage: e.target.value }))}
+                value={productForm.discountPercentage}
+                onChange={(e) => setProductForm(prev => ({ ...prev, discountPercentage: e.target.value }))}
               />
-              {productForm.price && productForm.discount_percentage && parseFloat(productForm.discount_percentage) > 0 && (
+              {productForm.price && productForm.discountPercentage && parseFloat(productForm.discountPercentage) > 0 && (
                 <p className="text-xs text-green-600">
-                  Preço com desconto: R$ {(parseFloat(productForm.price) * (1 - parseFloat(productForm.discount_percentage) / 100)).toFixed(2)}
+                  Preço com desconto: R$ {(parseFloat(productForm.price) * (1 - parseFloat(productForm.discountPercentage) / 100)).toFixed(2)}
                 </p>
               )}
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="image_url">URL da Imagem</Label>
-              <Input
-                id="image_url"
-                type="url"
-                value={productForm.image_url}
-                onChange={(e) => setProductForm(prev => ({ ...prev, image_url: e.target.value }))}
-              />
+              <Label>Imagem do Produto</Label>
+              <div className="flex flex-col gap-2">
+                {productForm.imageUrl && (
+                  <img
+                    src={productForm.imageUrl}
+                    alt="Preview"
+                    className="h-32 w-32 object-cover rounded-md border"
+                  />
+                )}
+                <div className="flex gap-2 items-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isUploading}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {isUploading ? 'Enviando...' : productForm.imageUrl ? 'Trocar imagem' : 'Selecionar imagem'}
+                  </Button>
+                  {productForm.imageUrl && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setProductForm(prev => ({ ...prev, imageUrl: '' }));
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                    >
+                      Remover
+                    </Button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+                <p className="text-xs text-muted-foreground">JPEG, PNG, WebP ou GIF — máx. 5MB</p>
+              </div>
             </div>
           </div>
 
-          {/* Specifications Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label className="text-base font-semibold">Especificações do Produto</Label>
@@ -307,7 +290,7 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
                 Adicionar Especificação
               </Button>
             </div>
-            
+
             {specifications.map((spec, index) => (
               <div key={index} className="flex gap-2 items-end">
                 <div className="flex-1">
@@ -333,28 +316,23 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
                   <Input
                     id={`spec-order-${index}`}
                     type="number"
-                    value={spec.display_order}
-                    onChange={(e) => updateSpecification(index, 'display_order', parseInt(e.target.value) || 0)}
+                    value={spec.displayOrder}
+                    onChange={(e) => updateSpecification(index, 'displayOrder', parseInt(e.target.value) || 0)}
                   />
                 </div>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => removeSpecification(index)}
-                >
+                <Button type="button" variant="destructive" size="sm" onClick={() => removeSpecification(index)}>
                   Remover
                 </Button>
               </div>
             ))}
-            
+
             {specifications.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 Nenhuma especificação adicionada. Clique em "Adicionar Especificação" para começar.
               </p>
             )}
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="description">Descrição</Label>
             <Textarea
@@ -364,12 +342,10 @@ const ProductFormModal = ({ isOpen, onClose, editingProduct, onProductSaved }: P
               rows={3}
             />
           </div>
-          
+
           <div className="flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="button" variant="outline" onClick={handleClose}>Cancelar</Button>
+            <Button type="submit" disabled={isLoading || isUploading}>
               {isLoading ? 'Salvando...' : editingProduct ? 'Atualizar' : 'Cadastrar'}
             </Button>
           </div>
